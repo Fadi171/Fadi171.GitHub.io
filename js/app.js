@@ -14,7 +14,7 @@ const SITE_CONFIG = {
   version: 1,
   lastUpdated: "2026-11-08T14:55:00Z",
   originHost: "fadi171.github.io",
-  cdnDomain: "<cdn.your-domain.com>"
+  cdnDomain: "cdn.fadi-lab.online"
 };
 
 (function () {
