@@ -1,0 +1,17 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Python helpers
+__pycache__/
+*.pyc
+
+# Never commit secrets or evidence containing account details
+.env
+*.pem
+*.key
+*.crt
+evidence-raw/

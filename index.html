@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alibaba Cloud CDN with GitHub Pages</title>
+  <meta name="description" content="Academic demonstration: a static GitHub Pages origin delivered through Alibaba Cloud CDN.">
+  <link rel="icon" type="image/png" href="images/logo.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#top" aria-label="Home">
+        <img src="images/logo.png" alt="" width="36" height="36">
+        <span>CDN<strong>Lab</strong></span>
+      </a>
+      <nav aria-label="Primary">
+        <ul class="nav-list">
+          <li><a href="#verification">Verification</a></li>
+          <li><a href="#architecture">Architecture</a></li>
+          <li><a href="#api">JSON API</a></li>
+          <li><a href="#cache">Cache rules</a></li>
+          <li><a href="#download">Download</a></li>
+          <li><a href="#tech">Tech info</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- A. Hero -->
+    <section class="hero" id="top">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Cloud Infrastructure Assignment</p>
+          <h1>Alibaba Cloud CDN <span class="accent">with GitHub Pages</span></h1>
+          <p class="lead">
+            A static website hosted on GitHub Pages acts as the <strong>origin server</strong>.
+            Alibaba Cloud CDN edge nodes cache its files and serve them to visitors
+            through an accelerated domain.
+          </p>
+          <div class="status-row">
+            <span class="status-pill" id="delivery-status" role="status">
+              <span class="dot" aria-hidden="true"></span>
+              <span class="status-text">Detecting delivery hostname…</span>
+            </span>
+            <span class="version-pill">Version <strong data-config="version">1</strong></span>
+          </div>
+          <p class="hint">
+            The badge only reports which hostname served this page. CDN activity is proven
+            with response headers and console evidence, not by this page.
+          </p>
+        </div>
+
+        <figure class="flow-card" aria-label="Request delivery flow">
+          <ol class="flow">
+            <li class="flow-step"><span class="flow-icon" aria-hidden="true">🖥️</span><span>User Browser</span></li>
+            <li class="flow-step"><span class="flow-icon" aria-hidden="true">🌐</span><span>Accelerated Domain</span></li>
+            <li class="flow-step is-edge"><span class="flow-icon" aria-hidden="true">⚡</span><span>Alibaba Cloud CDN Edge</span></li>
+            <li class="flow-step"><span class="flow-icon" aria-hidden="true">📦</span><span>GitHub Pages Origin</span></li>
+          </ol>
+          <figcaption>Cache hit: answered at the edge. Cache miss: edge fetches from origin, stores, then responds.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- B. Student verification -->
+    <section class="section" id="verification" aria-labelledby="verification-title">
+      <div class="container">
+        <header class="section-head">
+          <p class="eyebrow">Section B</p>
+          <h2 id="verification-title">Student Verification</h2>
+          <p>These values identify the submission and change between Version 1 and Version 2.</p>
+        </header>
+        <dl class="verify-grid">
+          <div class="verify-item"><dt>Student Name</dt><dd data-config="studentName">—</dd></div>
+          <div class="verify-item"><dt>Student ID</dt><dd data-config="studentId">—</dd></div>
+          <div class="verify-item"><dt>Verification Token</dt><dd class="mono" data-config="verificationToken">—</dd></div>
+          <div class="verify-item highlight"><dt>Current Version</dt><dd data-config="version">—</dd></div>
+          <div class="verify-item"><dt>Last Updated</dt><dd class="mono" data-config="lastUpdated">—</dd></div>
+        </dl>
+        <p class="notice" id="placeholder-notice" hidden>
+          ⚠️ Placeholder values detected. Edit <code>SITE_CONFIG</code> at the top of <code>js/app.js</code> before publishing.
+        </p>
+      </div>
+    </section>
+
+    <!-- C. Architecture -->
+    <section class="section alt" id="architecture" aria-labelledby="architecture-title">
+      <div class="container">
+        <header class="section-head">
+          <p class="eyebrow">Section C</p>
+          <h2 id="architecture-title">Architecture Overview</h2>
+          <p>Every request follows the same path. Only the edge decides whether the origin is contacted.</p>
+        </header>
+        <div class="arch-grid">
+          <article class="arch-card">
+            <span class="arch-num">1</span>
+            <h3>User Browser</h3>
+            <p>Requests <code>https://&lt;accelerated-domain&gt;/…</code>. It may also keep its own private browser cache.</p>
+          </article>
+          <article class="arch-card">
+            <span class="arch-num">2</span>
+            <h3>Accelerated Domain</h3>
+            <p>A hostname you own (e.g. <code>cdn.example.com</code>) whose DNS CNAME points to the CNAME generated by Alibaba Cloud, so DNS routes users to a nearby edge.</p>
+          </article>
+          <article class="arch-card edge">
+            <span class="arch-num">3</span>
+            <h3>Alibaba Cloud CDN Edge</h3>
+            <p>Terminates HTTPS, applies cache rules (TTL per path/extension), answers from cache on a <em>hit</em>, or goes back to origin on a <em>miss</em>.</p>
+          </article>
+          <article class="arch-card">
+            <span class="arch-num">4</span>
+            <h3>GitHub Pages Origin</h3>
+            <p>Serves the source files from the repository at <code>&lt;username&gt;.github.io</code>. The CDN sends that value as the back-to-origin <code>Host</code> header.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- D. JSON API -->
+    <section class="section" id="api" aria-labelledby="api-title">
+      <div class="container two-col">
+        <header class="section-head">
+          <p class="eyebrow">Section D</p>
+          <h2 id="api-title">JSON API Demonstration</h2>
+          <p>
+            The page fetches <code>api/news.json</code> with <code>{ cache: "no-store" }</code>.
+            That skips the <em>browser</em> cache only; the CDN edge can still return a cached copy,
+            which is exactly what the purge test observes.
+          </p>
+          <button class="btn" type="button" id="reload-json">Fetch again</button>
+        </header>
+        <div class="api-card" id="api-card" data-state="loading" aria-live="polite">
+          <div class="api-state">
+            <span class="state-badge" id="api-state-label">Loading…</span>
+            <span class="mono small" id="api-meta"></span>
+          </div>
+          <p class="api-message" id="api-message">Requesting api/news.json…</p>
+          <dl class="api-fields">
+            <div><dt>JSON version</dt><dd class="mono" id="api-version">—</dd></div>
+            <div><dt>HTTP status</dt><dd class="mono" id="api-status">—</dd></div>
+            <div><dt>Fetched at</dt><dd class="mono" id="api-time">—</dd></div>
+          </dl>
+          <p class="api-mismatch" id="api-mismatch" hidden></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cache rules overview -->
+    <section class="section alt" id="cache" aria-labelledby="cache-title">
+      <div class="container">
+        <header class="section-head">
+          <p class="eyebrow">Configuration plan</p>
+          <h2 id="cache-title">CDN Cache Rules</h2>
+          <p>Planned rules for the Alibaba Cloud console. Specific paths outrank broad extension rules.</p>
+        </header>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Priority</th><th scope="col">Match</th><th scope="col">TTL</th><th scope="col">Reason</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="prio p1">Highest</span></td><td><code>/api/news.json</code></td><td>1 minute</td><td>Data changes often; stale JSON is the costliest mistake.</td></tr>
+              <tr><td><span class="prio p2">High</span></td><td><code>/index.html</code></td><td>10 minutes</td><td>Entry page must pick up new versions quickly.</td></tr>
+              <tr><td><span class="prio p3">Medium</span></td><td><code>jpg, jpeg, png</code></td><td>7 days</td><td>Images rarely change and are the heaviest bytes.</td></tr>
+              <tr><td><span class="prio p3">Medium</span></td><td><code>css, js</code></td><td>1 day</td><td>Change with releases; a day balances hit ratio and freshness.</td></tr>
+              <tr><td><span class="prio p3">Medium</span></td><td><code>pdf</code></td><td>3 days</td><td>Downloads are static but may be revised occasionally.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- E. Download -->
+    <section class="section" id="download" aria-labelledby="download-title">
+      <div class="container">
+        <div class="download-card">
+          <div>
+            <p class="eyebrow">Section E</p>
+            <h2 id="download-title">Download the Guide</h2>
+            <p>A short original PDF explaining the origin/CDN setup and how to test caching. Served as a static file and cached by the <code>pdf</code> rule.</p>
+          </div>
+          <a class="btn btn-lg" href="downloads/guide.pdf" download>⬇ Download guide.pdf</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- F. Technical info -->
+    <section class="section alt" id="tech" aria-labelledby="tech-title">
+      <div class="container">
+        <header class="section-head">
+          <p class="eyebrow">Section F</p>
+          <h2 id="tech-title">Technical Information</h2>
+        </header>
+        <dl class="tech-grid">
+          <div><dt>Hosting platform</dt><dd>GitHub Pages (static origin)</dd></div>
+          <div><dt>CDN provider</dt><dd>Alibaba Cloud CDN</dd></div>
+          <div><dt>Origin hostname</dt><dd class="mono" data-config="originHost">—</dd></div>
+          <div><dt>Accelerated domain (planned)</dt><dd class="mono" data-config="cdnDomain">—</dd></div>
+          <div><dt>Hostname serving this page</dt><dd class="mono" id="served-host">—</dd></div>
+          <div><dt>Website version</dt><dd data-config="version">—</dd></div>
+          <div class="wide"><dt>Cache configuration</dt><dd>5 rules: JSON 1 min · HTML 10 min · images 7 days · CSS/JS 1 day · PDF 3 days</dd></div>
+          <div class="wide"><dt>CDN status</dt><dd>Not asserted by this page. Verify with <code>curl -I</code> headers (<code>Via</code>, <code>Age</code>, cache-status headers) and the Alibaba Cloud console.</dd></div>
+        </dl>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>Academic project · Static HTML, CSS and JavaScript · No tracking, no cookies.</p>
+      <p class="mono small">v<span data-config="version">1</span> · <span data-config="lastUpdated">—</span></p>
+    </div>
+  </footer>
+
+  <script src="js/app.js" defer></script>
+</body>
+</html>
