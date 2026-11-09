@@ -11,8 +11,8 @@ const SITE_CONFIG = {
   studentName: "فادي فيصل محمد الحربي",
   studentId: "462106787",
   verificationToken: "462106787-fc7c3965",
-  version: 1,
-  lastUpdated: "2026-11-08T14:55:00Z",
+  version: 2,
+  lastUpdated: "2026-11-09T17:50:00Z",
   originHost: "fadi171.github.io",
   cdnDomain: "fadi-lab.online"
 };
