@@ -1137,7 +1137,7 @@
     setInterval(checkDue, 1000);
     setInterval(() => { if (current) $("edDate").textContent = fmtLong(current.updated); }, 30 * 1000);
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-      navigator.serviceWorker.register("sw.js").catch(() => {});
+      navigator.serviceWorker.register("sw.js").then((r) => r.update()).catch(() => {});
     }
   }
   init();
