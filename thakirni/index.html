@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ذكرني</title>
+  <meta name="description" content="ملاحظاتي وتذكيراتي في مكان واحد.">
+  <meta name="theme-color" content="#EFE6D6">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ذكرني">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+      <symbol id="i-cam" viewBox="0 0 24 24"><path d="M3.5 8.5A1.5 1.5 0 0 1 5 7h2.6l1.6-2.2h5.6L16.4 7H19a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5v-9Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+      <symbol id="i-new" viewBox="0 0 24 24"><path d="M12 4.5H6A1.5 1.5 0 0 0 4.5 6v12A1.5 1.5 0 0 0 6 19.5h12a1.5 1.5 0 0 0 1.5-1.5v-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="m10 14 .5-3 8-8 2.5 2.5-8 8-3 .5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+      <symbol id="i-back" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 4h4M7 7l.8 12a1.5 1.5 0 0 0 1.5 1.4h5.4a1.5 1.5 0 0 0 1.5-1.4L17 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-pin" viewBox="0 0 24 24"><path d="M9 4h6l-1 5 3 3H7l3-3-1-5ZM12 12v8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="6" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M11 7h9M11 17h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+      <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="10" r="1.8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m4 17 5-4.5 3.5 3 3-2.5L20 17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+      <symbol id="i-text" viewBox="0 0 24 24"><path d="M5 6.5h14M12 6.5V19M9 19h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-flip" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5M20 4v4.5h-4.5M20 12a8 8 0 0 1-13.7 5.6L4 15.5M4 20v-4.5h4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5-10-6.5Z" fill="currentColor"/></symbol>
+    </defs>
+  </svg>
+
+  <div class="app" id="app" data-view="list">
+    <!-- القائمة -->
+    <aside class="side" aria-label="الملاحظات">
+      <header class="side-top">
+        <h1 class="brand">ذكرني<span class="brand-dot" aria-hidden="true"></span></h1>
+        <button class="icon-btn" id="btnAlarms" aria-label="المنبهات" title="المنبهات">
+          <svg><use href="#i-bell"/></svg>
+          <span class="badge" id="alarmBadge" hidden></span>
+        </button>
+      </header>
+
+      <label class="search">
+        <svg><use href="#i-search"/></svg>
+        <input id="search" type="search" placeholder="دوّر في ملاحظاتك" autocomplete="off">
+      </label>
+
+      <div class="notify-bar" id="notifyBar" hidden>
+        <p>فعّل التنبيهات عشان أقدر أنبهك حتى لو كنت في تبويب ثاني.</p>
+        <div class="notify-actions">
+          <button class="btn btn-ink btn-sm" id="btnNotifyOn">فعّلها</button>
+          <button class="btn btn-ghost btn-sm" id="btnNotifyLater">بعدين</button>
+        </div>
+      </div>
+
+      <div class="list" id="list"></div>
+
+      <footer class="side-foot">
+        <span class="count" id="count"></span>
+        <div class="foot-actions">
+          <button class="icon-btn" id="btnQuickCam" aria-label="صوّر اللوحة" title="صوّر اللوحة"><svg><use href="#i-cam"/></svg></button>
+          <button class="icon-btn icon-btn-sky" id="btnNew" aria-label="ملاحظة جديدة" title="ملاحظة جديدة"><svg><use href="#i-new"/></svg></button>
+        </div>
+      </footer>
+    </aside>
+
+    <!-- المحرر -->
+    <main class="pane">
+      <div class="pane-empty" id="paneEmpty">
+        <p class="pane-empty-title">اختر ملاحظة</p>
+        <p>أو ابدأ وحدة جديدة، أو صوّر اللوحة على طول.</p>
+      </div>
+
+      <section class="editor" id="editor" hidden>
+        <header class="ed-top">
+          <button class="back-btn" id="btnBack"><svg><use href="#i-back"/></svg><span>الملاحظات</span></button>
+          <div class="ed-top-actions">
+            <button class="icon-btn" id="btnPin" aria-label="ثبّتها فوق" title="ثبّتها فوق"><svg><use href="#i-pin"/></svg></button>
+            <button class="icon-btn" id="btnDelete" aria-label="احذفها" title="احذفها"><svg><use href="#i-trash"/></svg></button>
+            <button class="text-btn" id="btnDone">تم</button>
+          </div>
+        </header>
+
+        <div class="ed-meta">
+          <span id="edDate"></span>
+          <button class="reminder-chip" id="edReminder" hidden><svg><use href="#i-bell"/></svg><span></span></button>
+        </div>
+
+        <div class="body" id="body" contenteditable="true" spellcheck="true" data-placeholder="اكتب اللي في بالك…"></div>
+
+        <nav class="toolbar" aria-label="أدوات">
+          <button class="tool" id="tTitle" title="عنوان"><svg><use href="#i-text"/></svg><span>عنوان</span></button>
+          <button class="tool" id="tCheck" title="قائمة مهام"><svg><use href="#i-check"/></svg><span>مهام</span></button>
+          <button class="tool tool-main" id="tCam" title="صوّر"><svg><use href="#i-cam"/></svg><span>صوّر</span></button>
+          <button class="tool" id="tImage" title="من الصور"><svg><use href="#i-image"/></svg><span>صورة</span></button>
+          <button class="tool" id="tAlarm" title="منبه"><svg><use href="#i-bell"/></svg><span>منبه</span></button>
+        </nav>
+      </section>
+    </main>
+  </div>
+
+  <!-- الكاميرا -->
+  <div class="camera" id="camera" hidden>
+    <video id="camVideo" playsinline muted autoplay></video>
+    <div class="cam-flash" id="camFlash"></div>
+    <div class="cam-msg" id="camMsg" hidden>
+      <p id="camMsgText"></p>
+      <button class="btn btn-white" id="camFallback">افتح كاميرا الجوال</button>
+    </div>
+    <div class="cam-hint">وجّه الكاميرا على اللوحة واضغط الزر</div>
+    <div class="cam-bar">
+      <button class="cam-side" id="camClose" aria-label="سكّر"><svg><use href="#i-close"/></svg></button>
+      <button class="shutter" id="camShot" aria-label="صوّر"><span></span></button>
+      <button class="cam-side" id="camFlip" aria-label="بدّل الكاميرا"><svg><use href="#i-flip"/></svg></button>
+    </div>
+  </div>
+
+  <!-- المنبه -->
+  <dialog class="sheet" id="remDlg">
+    <form method="dialog" class="sheet-in" id="remForm">
+      <div class="sheet-head">
+        <h2>متى أذكرك؟</h2>
+        <button type="button" class="icon-btn" id="remCancel" aria-label="إلغاء"><svg><use href="#i-close"/></svg></button>
+      </div>
+
+      <div class="chips" id="remQuick">
+        <button type="button" class="chip" data-q="10m">بعد 10 دقايق</button>
+        <button type="button" class="chip" data-q="1h">بعد ساعة</button>
+        <button type="button" class="chip" data-q="tonight">الليلة 9</button>
+        <button type="button" class="chip" data-q="tomorrow">بكرة 8 الصبح</button>
+      </div>
+
+      <div class="field-row">
+        <label class="field"><span>اليوم</span><input type="date" id="remDate" required></label>
+        <label class="field"><span>الساعة</span><input type="time" id="remTime" required></label>
+      </div>
+
+      <div class="field">
+        <span>يتكرر؟</span>
+        <div class="seg" id="remRepeat">
+          <button type="button" data-v="none" class="on">مرة وحدة</button>
+          <button type="button" data-v="daily">كل يوم</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span>صوت المنبه <small>(اضغط عشان تسمعه)</small></span>
+        <div class="seg" id="remSound">
+          <button type="button" data-v="bell" class="on">جرس</button>
+          <button type="button" data-v="beep">تيت تيت</button>
+          <button type="button" data-v="soft">هادي</button>
+        </div>
+      </div>
+
+      <p class="rem-preview" id="remPreview"></p>
+
+      <div class="sheet-actions">
+        <button type="button" class="btn btn-ghost" id="remRemove" hidden>شيل المنبه</button>
+        <button type="submit" class="btn btn-ink" id="remSave">ثبّت المنبه</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- كل المنبهات -->
+  <dialog class="sheet" id="alarmsDlg">
+    <div class="sheet-in">
+      <div class="sheet-head">
+        <h2>المنبهات</h2>
+        <button type="button" class="icon-btn" id="alarmsClose" aria-label="سكّر"><svg><use href="#i-close"/></svg></button>
+      </div>
+      <div class="alarms" id="alarmsList"></div>
+      <div class="sheet-actions">
+        <button type="button" class="btn btn-ink" id="alarmsNew">منبه جديد</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- لما يرن -->
+  <div class="ring" id="ring" hidden role="alertdialog" aria-live="assertive">
+    <div class="ring-in">
+      <p class="ring-label" id="ringLabel">حان الوقت</p>
+      <p class="ring-time" id="ringTime"></p>
+      <p class="ring-title" id="ringTitle"></p>
+      <div class="ring-actions">
+        <button class="btn btn-sky btn-lg" id="ringSnooze">أجّله 5 دقايق</button>
+        <button class="btn btn-white btn-lg" id="ringStop">طفّه</button>
+      </div>
+      <button class="ring-open" id="ringOpen">افتح الملاحظة</button>
+    </div>
+  </div>
+
+  <!-- عرض الصورة -->
+  <div class="viewer" id="viewer" hidden>
+    <img id="viewerImg" alt="">
+    <div class="viewer-bar">
+      <button class="btn btn-white btn-sm" id="viewerClose">رجوع</button>
+      <a class="btn btn-ghost-w btn-sm" id="viewerSave" download="ذكرني.jpg">احفظ الصورة</a>
+      <button class="btn btn-ghost-w btn-sm" id="viewerDel">احذفها من الملاحظة</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <input type="file" id="filePick" accept="image/*" multiple hidden>
+  <input type="file" id="fileCapture" accept="image/*" capture="environment" hidden>
+
+  <script src="app.js"></script>
+</body>
+</html>

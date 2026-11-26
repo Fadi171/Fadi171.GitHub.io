@@ -7,6 +7,11 @@ A static website (HTML, CSS, vanilla JavaScript, JSON) hosted on **GitHub Pages*
 User Browser → Accelerated Domain (CNAME) → Alibaba Cloud CDN Edge → GitHub Pages Origin
 ```
 
+## ذكرني (`/thakirni/`)
+
+تطبيق ملاحظات وتذكير على `https://fadi171.github.io/thakirni/`: ملاحظات مثل ملاحظات الآيفون،
+كاميرا تصور اللوحة وتلصقها في الملاحظة، ومنبه بصوت. ملف الأدوات: `thakirni/tools.pdf`.
+
 ## Structure
 
 ```text
