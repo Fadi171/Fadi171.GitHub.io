@@ -589,33 +589,56 @@
       },
       errorHandler: (e) => fail(e instanceof Error ? e : new Error(String(e))),
     })]), 120000, "التجهيز طوّل كثير");
+    await w.setParameters({
+      tessedit_pageseg_mode: "3",
+      tessedit_char_blacklist: "|\\§©®™¢£¥¤¦¬¨`^~_{}[]<>«»“”„•·¶†‡",
+      preserve_interword_spaces: "1",
+    });
     ocrWorker = w;
     return w;
   }
 
-  // نصغّر الصورة ونخليها رمادي: أخف على ذاكرة الجوال وأوضح للقراية
+  // نجهز الصورة للقراية: نصغرها، ونخليها أبيض وأسود حسب الإضاءة حول كل نقطة،
+  // فالخلفية والرسومات تصير بيضا والكلام يبقى أسود. ولو الخلفية غامقة (سبورة) نعكسها.
   function ocrCanvas(source, w, h) {
     const k = Math.min(1, 1600 / Math.max(w, h));
+    const W = Math.max(1, Math.round(w * k)), H = Math.max(1, Math.round(h * k));
     const c = document.createElement("canvas");
-    c.width = Math.max(1, Math.round(w * k));
-    c.height = Math.max(1, Math.round(h * k));
+    c.width = W;
+    c.height = H;
     const ctx = c.getContext("2d", { willReadFrequently: true });
     ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, c.width, c.height);
-    ctx.drawImage(source, 0, 0, c.width, c.height);
-    const im = ctx.getImageData(0, 0, c.width, c.height);
+    ctx.fillRect(0, 0, W, H);
+    ctx.drawImage(source, 0, 0, W, H);
+    const im = ctx.getImageData(0, 0, W, H);
     const d = im.data;
-    let lo = 255, hi = 0;
-    for (let i = 0; i < d.length; i += 4) {
-      const g = (d[i] * 299 + d[i + 1] * 587 + d[i + 2] * 114) / 1000;
-      d[i] = g;
-      if (g < lo) lo = g;
-      if (g > hi) hi = g;
+    const g = new Float32Array(W * H);
+    let sum = 0;
+    for (let i = 0; i < g.length; i++) {
+      const v = (d[i * 4] * 299 + d[i * 4 + 1] * 587 + d[i * 4 + 2] * 114) / 1000;
+      g[i] = v;
+      sum += v;
     }
-    const range = Math.max(1, hi - lo);
-    for (let i = 0; i < d.length; i += 4) {
-      const v = ((d[i] - lo) * 255) / range;
-      d[i] = d[i + 1] = d[i + 2] = v;
+    if (sum / g.length < 110) for (let i = 0; i < g.length; i++) g[i] = 255 - g[i];
+    const I = new Float64Array((W + 1) * (H + 1));
+    for (let y = 0; y < H; y++) {
+      let row = 0;
+      for (let x = 0; x < W; x++) {
+        row += g[y * W + x];
+        I[(y + 1) * (W + 1) + x + 1] = I[y * (W + 1) + x + 1] + row;
+      }
+    }
+    const r = Math.max(8, Math.round(Math.min(W, H) / 40));
+    for (let y = 0; y < H; y++) {
+      const y1 = Math.max(0, y - r), y2 = Math.min(H, y + r + 1);
+      for (let x = 0; x < W; x++) {
+        const x1 = Math.max(0, x - r), x2 = Math.min(W, x + r + 1);
+        const mean = (I[y2 * (W + 1) + x2] - I[y1 * (W + 1) + x2] - I[y2 * (W + 1) + x1] + I[y1 * (W + 1) + x1]) / ((x2 - x1) * (y2 - y1));
+        const v = g[y * W + x] < mean * 0.85 ? 0 : 255;
+        const o = (y * W + x) * 4;
+        d[o] = d[o + 1] = d[o + 2] = v;
+        d[o + 3] = 255;
+      }
     }
     ctx.putImageData(im, 0, 0);
     return c;
@@ -630,11 +653,38 @@
     });
   }
 
-  function cleanText(t) {
-    return t
-      .split("\n")
-      .map((l) => l.replace(/[\u200e\u200f\u202a-\u202e]/g, "").replace(/\s+/g, " ").trim())
-      .filter((l) => l && /[\p{L}\p{N}]/u.test(l));
+  // ناخذ بس الكلمات اللي القراية متأكدة منها، ونشيل الرموز والخربطة اللي تجي من الرسومات والخلفية
+  const JUNK_EDGES = /^[^\p{L}\p{N}]+|[^\p{L}\p{N}%]+$/gu;
+  const BIDI = /[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g;
+  function goodWord(w) {
+    const t = (w.text || "").replace(BIDI, "").replace(JUNK_EDGES, "");
+    if (!t) return null;
+    const letters = (t.match(/[\p{L}\p{N}]/gu) || []).length;
+    if (letters / t.length < 0.7) return null;                  // أغلبها رموز
+    if (/(.)\1{2,}/u.test(t) && !/\p{N}/u.test(t)) return null; // حرف مكرر مثل lll
+    const arabic = /\p{Script=Arabic}/u.test(t);
+    let need = arabic ? 70 : 75;
+    if (letters <= 2) need = 85;                                 // الكلمات القصيرة أكثر شي يطلع غلط
+    if (/^\p{Script=Latin}$/u.test(t) && !/^[aAI]$/.test(t)) return null;
+    return w.confidence >= need ? t : null;
+  }
+  function cleanResult(data) {
+    const out = [];
+    for (const b of data.blocks || []) {
+      for (const p of b.paragraphs || []) {
+        for (const l of p.lines || []) {
+          const all = l.words || [];
+          const words = all.map(goodWord).filter(Boolean);
+          if (!words.length) continue;
+          const chars = words.join("").length;
+          if (chars < 2) continue;
+          // سطر أغلبه خربطة وفيه كلمة قصيرة وحدة صح بالصدفة
+          if (all.length >= 4 && words.length / all.length < 0.3 && chars < 6) continue;
+          out.push(words.join(" "));
+        }
+      }
+    }
+    return out;
   }
 
   let lastOcrSrc = null;
@@ -647,10 +697,10 @@
       const w = await getWorker(job);
       if (job !== ocrJob) return;
       readingUI("أقرا الكلام…", 0, "");
-      const { data } = await timeout(w.recognize(canvas), 90000, "القراية طوّلت كثير");
+      const { data } = await timeout(w.recognize(canvas, {}, { text: true, blocks: true }), 90000, "القراية طوّلت كثير");
       if (job !== ocrJob) return;
       $("reading").hidden = true;
-      const lines = cleanText(data.text || "");
+      const lines = cleanResult(data);
       if (!lines.length) { toast("ما لقيت كلام واضح، قرّب الكاميرا وجرّب مرة ثانية"); return; }
       insertLines(lines);
       toast("تحوّلت لكلام، عدّل اللي تبي");
