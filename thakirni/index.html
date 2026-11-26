@@ -66,8 +66,9 @@
       <footer class="side-foot">
         <span class="count" id="count"></span>
         <div class="foot-actions">
-          <button class="icon-btn" id="btnQuickCam" aria-label="صوّر" title="صوّر"><svg><use href="#i-cam"/></svg></button>
-          <button class="icon-btn icon-btn-sky" id="btnNew" aria-label="ملاحظة جديدة" title="ملاحظة جديدة"><svg><use href="#i-new"/></svg></button>
+          <button class="icon-btn" id="btnNew" aria-label="ملاحظة جديدة" title="ملاحظة جديدة"><svg><use href="#i-new"/></svg></button>
+          <button class="cam-btn cam-btn-ink" id="btnQuickCam" aria-label="صوّر وخلها صورة" title="صوّر وخلها صورة"><svg><use href="#i-cam"/></svg></button>
+          <button class="cam-btn cam-btn-sky" id="btnQuickText" aria-label="صوّر وحوّلها كلام" title="صوّر وحوّلها كلام"><svg><use href="#i-cam"/></svg></button>
         </div>
       </footer>
     </aside>
@@ -99,8 +100,9 @@
         <nav class="toolbar" aria-label="أدوات">
           <button class="tool" id="tTitle" title="عنوان"><svg><use href="#i-text"/></svg><span>عنوان</span></button>
           <button class="tool" id="tCheck" title="قائمة مهام"><svg><use href="#i-check"/></svg><span>مهام</span></button>
-          <button class="tool tool-main" id="tCam" title="صوّر"><svg><use href="#i-cam"/></svg><span>صوّر</span></button>
-          <button class="tool" id="tImage" title="من الصور"><svg><use href="#i-image"/></svg><span>صورة</span></button>
+          <button class="tool tool-main tool-sky" id="tText" title="صوّر وحوّلها كلام"><svg><use href="#i-cam"/></svg><span>كلام</span></button>
+          <button class="tool tool-main" id="tCam" title="صوّر وخلها صورة"><svg><use href="#i-cam"/></svg><span>صورة</span></button>
+          <button class="tool" id="tImage" title="من الألبوم"><svg><use href="#i-image"/></svg><span>الألبوم</span></button>
           <button class="tool" id="tAlarm" title="منبه"><svg><use href="#i-bell"/></svg><span>منبه</span></button>
         </nav>
       </section>
@@ -115,7 +117,7 @@
       <p id="camMsgText"></p>
       <button class="btn btn-white" id="camFallback">افتح كاميرا الجوال</button>
     </div>
-    <div class="cam-hint">وجّه الكاميرا واضغط الزر</div>
+    <div class="cam-hint" id="camHint">وجّه الكاميرا واضغط الزر</div>
     <div class="cam-bar">
       <button class="cam-side" id="camClose" aria-label="سكّر"><svg><use href="#i-close"/></svg></button>
       <button class="shutter" id="camShot" aria-label="صوّر"><span></span></button>
@@ -204,6 +206,16 @@
       <button class="btn btn-white btn-sm" id="viewerClose">رجوع</button>
       <a class="btn btn-ghost-w btn-sm" id="viewerSave" download="ذكرني.jpg">احفظ الصورة</a>
       <button class="btn btn-ghost-w btn-sm" id="viewerDel">احذفها من الملاحظة</button>
+    </div>
+  </div>
+
+  <!-- قراية الكلام من الصورة -->
+  <div class="reading" id="reading" hidden role="status" aria-live="polite">
+    <div class="reading-in">
+      <p class="reading-title" id="readTitle">أقرا الكلام…</p>
+      <div class="bar"><span id="readBar"></span></div>
+      <p class="reading-sub" id="readSub"></p>
+      <button class="btn btn-ghost btn-sm" id="readCancel">إلغاء</button>
     </div>
   </div>
 
