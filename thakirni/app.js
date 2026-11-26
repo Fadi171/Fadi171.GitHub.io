@@ -919,6 +919,7 @@
     $("remRemove").hidden = !r;
     $("remSave").textContent = r ? "عدّل المنبه" : "ثبّت المنبه";
     updatePreview();
+    renderOutside();
     remDlg.showModal();
   }
 
@@ -928,6 +929,7 @@
     const now = new Date();
     let t;
     switch (c.dataset.q) {
+      case "1m": t = Date.now() + 1 * MIN; break;
       case "10m": t = Date.now() + 10 * MIN; break;
       case "1h": t = Date.now() + 60 * MIN; break;
       case "tonight": { const d = new Date(now); d.setHours(21, 0, 0, 0); if (d <= now) d.setDate(d.getDate() + 1); t = d.getTime(); break; }
@@ -953,11 +955,54 @@
   remDlg.addEventListener("click", (e) => { if (e.target === remDlg) remDlg.close(); });
 
   /* ---------- تقويم الجوال: يرن حتى لو الموقع مسكّر ---------- */
-  const CAL_KEY = "thakirni-cal";
-  try { if (localStorage.getItem(CAL_KEY) === "0") $("remCal").checked = false; } catch {}
-  $("remCal").addEventListener("change", (e) => {
-    try { localStorage.setItem(CAL_KEY, e.target.checked ? "1" : "0"); } catch {}
-  });
+  // وين يرن المنبه لو الموقع مسكّر: منبه الساعة (عن طريق الاختصارات)، أو التقويم، أو ولا شي
+  const OUT_KEY = "thakirni-outside", CLOCK_KEY = "thakirni-clock-ready";
+  const store2 = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+  };
+  let outside = store2.get(OUT_KEY) || (store2.get(CLOCK_KEY) ? "clock" : "cal");
+  function renderOutside() {
+    setSeg("remOutside", outside);
+    const h = $("outsideHint");
+    if (outside === "clock") {
+      h.innerHTML = store2.get(CLOCK_KEY)
+        ? "منبه حقيقي في تطبيق الساعة، يرن بصوت عالي لين تطفيه."
+        : 'يحتاج تجهيز مرة وحدة. <button type="button" id="clockHow">جهّزه الحين</button>';
+      const how = $("clockHow");
+      if (how) how.onclick = () => clockDlg.showModal();
+    } else if (outside === "cal") {
+      h.textContent = 'تنبيه من تقويم الجوال في وقته. لما تطلع لك شاشة التقويم اضغط "إضافة".';
+    } else {
+      h.textContent = "يرن بس والموقع مفتوح.";
+    }
+  }
+  $("remOutside").onclick = (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    outside = b.dataset.v;
+    store2.set(OUT_KEY, outside);
+    renderOutside();
+  };
+
+  const clockDlg = $("clockDlg");
+  const SITE = location.href.split("#")[0].split("?")[0];
+  function runClock(at, label) {
+    const d = new Date(at);
+    const hhmm = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+    const q = new URLSearchParams({ name: "ذكرني", input: "text", text: hhmm, "x-success": SITE });
+    location.href = "shortcuts://x-callback-url/run-shortcut?" + q.toString().replace(/\+/g, "%20");
+  }
+  $("clockClose").onclick = () => clockDlg.close();
+  $("clockTest").onclick = () => runClock(Date.now() + 60 * 1000, "تجربة");
+  $("clockDone").onclick = () => {
+    store2.set(CLOCK_KEY, "1");
+    outside = "clock";
+    store2.set(OUT_KEY, outside);
+    clockDlg.close();
+    renderOutside();
+    toast("تمام، المنبهات الجاية بتنحط في تطبيق الساعة");
+  };
+  clockDlg.addEventListener("click", (e) => { if (e.target === clockDlg) clockDlg.close(); });
 
   function icsDate(t) {
     return new Date(t).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
@@ -1012,8 +1057,14 @@
     return lines.map(icsFold).join("\r\n") + "\r\n";
   }
   function addToCalendar(n) {
-    const blob = new Blob([makeIcs(n)], { type: "text/calendar;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
+    const ics = makeIcs(n);
+    // لو ملف التخزين شغّال نفتح التقويم كرابط عادي، والآيفون يطلع شاشة الإضافة
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(ics))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      location.href = "event.ics?d=" + b64;
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
     const a = document.createElement("a");
     a.href = url;
     a.download = "thakirni.ics";
@@ -1038,15 +1089,19 @@
       n.html = body.innerHTML;
     }
     n.updated = Date.now();
-    // لازم ينزل الملف وقت الضغطة نفسها، قبل أي انتظار، وإلا الآيفون يمنعه
-    const cal = $("remCal").checked;
-    if (cal) addToCalendar(n);
-    await persist(n);
+    // منبه الساعة ما ينفع لأكثر من يوم أو للتكرار اليومي، فهذي تروح للتقويم
+    let mode = outside;
+    if (mode === "clock" && !store2.get(CLOCK_KEY)) mode = "cal";
+    if (mode === "clock" && (remState.repeat === "daily" || t - Date.now() > 23 * 60 * MIN)) mode = "cal";
+    const saving = persist(n); // نبدأ الحفظ قبل ما نطلع من الصفحة
     remDlg.close();
     renderMeta();
     renderList();
-    if (cal) toast("اضغط \"إضافة\" في التقويم عشان يرن حتى لو الموقع مسكّر");
+    // لازم نفتح الساعة أو التقويم وقت الضغطة نفسها، قبل أي انتظار، وإلا الآيفون يمنعه
+    if (mode === "clock") { runClock(t, titleOf(n)); toast("بيفتح الاختصارات ويحط المنبه في الساعة"); }
+    else if (mode === "cal") { addToCalendar(n); toast("اضغط \"إضافة\" في التقويم عشان يرن حتى لو الموقع مسكّر"); }
     else toast("تمام، بذكرك " + fmtWhen(t));
+    await saving;
     askNotifyIfNeeded();
   });
   $("remRemove").onclick = async () => {
