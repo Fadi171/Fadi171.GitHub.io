@@ -10,7 +10,7 @@ User Browser → Accelerated Domain (CNAME) → Alibaba Cloud CDN Edge → GitHu
 ## ذكرني (`/thakirni/`)
 
 تطبيق ملاحظات وتذكير على `https://fadi171.github.io/thakirni/`: ملاحظات مثل ملاحظات الآيفون،
-كاميرا تصور اللوحة وتلصقها في الملاحظة، ومنبه بصوت. ملف الأدوات: `thakirni/tools.pdf`.
+كاميرا تصوّر أي شي وتلصقه في الملاحظة، ومنبه بصوت. ملف الأدوات: `thakirni/tools.pdf`.
 
 ## Structure
 
