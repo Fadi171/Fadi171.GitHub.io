@@ -1,4 +1,4 @@
-const CACHE = "thakirni-v7";
+const CACHE = "thakirni-v8";
 const SHELL = ["./", "index.html", "style.css", "app.js", "manifest.webmanifest", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {

@@ -952,6 +952,77 @@
   $("remCancel").onclick = () => remDlg.close();
   remDlg.addEventListener("click", (e) => { if (e.target === remDlg) remDlg.close(); });
 
+  /* ---------- تقويم الجوال: يرن حتى لو الموقع مسكّر ---------- */
+  const CAL_KEY = "thakirni-cal";
+  try { if (localStorage.getItem(CAL_KEY) === "0") $("remCal").checked = false; } catch {}
+  $("remCal").addEventListener("change", (e) => {
+    try { localStorage.setItem(CAL_KEY, e.target.checked ? "1" : "0"); } catch {}
+  });
+
+  function icsDate(t) {
+    return new Date(t).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  }
+  function icsText(v) {
+    return String(v).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+  }
+  // سطور ملف التقويم لازم ما تزيد عن 75 بايت، فنقسمها بدون ما نقطع حرف عربي
+  function icsFold(line) {
+    const enc = new TextEncoder();
+    if (enc.encode(line).length <= 75) return line;
+    const parts = [];
+    let cur = "", size = 0, limit = 75;
+    for (const ch of line) {
+      const b = enc.encode(ch).length;
+      if (size + b > limit) { parts.push(cur); cur = ""; size = 0; limit = 74; }
+      cur += ch;
+      size += b;
+    }
+    parts.push(cur);
+    return parts.join("\r\n ");
+  }
+  function makeIcs(n) {
+    const title = titleOf(n);
+    const rest = textOf(n.html).slice(1).join("\n");
+    const at = n.reminder.at;
+    const lines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Thakirni//AR",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
+      "BEGIN:VEVENT",
+      "UID:" + n.id + "@thakirni",
+      "DTSTAMP:" + icsDate(Date.now()),
+      "DTSTART:" + icsDate(at),
+      "DTEND:" + icsDate(at + 15 * MIN),
+      "SUMMARY:" + icsText(title),
+      "DESCRIPTION:" + icsText((rest ? rest + "\n\n" : "") + "من ذكرني: " + location.href.split("#")[0]),
+      "URL:" + location.href.split("#")[0],
+    ];
+    if (n.reminder.repeat === "daily") lines.push("RRULE:FREQ=DAILY");
+    lines.push(
+      "BEGIN:VALARM",
+      "ACTION:DISPLAY",
+      "DESCRIPTION:" + icsText(title),
+      "TRIGGER:PT0S",
+      "END:VALARM",
+      "END:VEVENT",
+      "END:VCALENDAR"
+    );
+    return lines.map(icsFold).join("\r\n") + "\r\n";
+  }
+  function addToCalendar(n) {
+    const blob = new Blob([makeIcs(n)], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "thakirni.ics";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60 * 1000);
+  }
+
   $("remForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     let t = fromInputs();
@@ -967,11 +1038,15 @@
       n.html = body.innerHTML;
     }
     n.updated = Date.now();
+    // لازم ينزل الملف وقت الضغطة نفسها، قبل أي انتظار، وإلا الآيفون يمنعه
+    const cal = $("remCal").checked;
+    if (cal) addToCalendar(n);
     await persist(n);
     remDlg.close();
     renderMeta();
     renderList();
-    toast("تمام، بذكرك " + fmtWhen(t));
+    if (cal) toast("اضغط \"إضافة\" في التقويم عشان يرن حتى لو الموقع مسكّر");
+    else toast("تمام، بذكرك " + fmtWhen(t));
     askNotifyIfNeeded();
   });
   $("remRemove").onclick = async () => {

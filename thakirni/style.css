@@ -443,3 +443,26 @@ dialog.sheet::backdrop { background: rgba(21,21,21,.42); }
 .reading.failed .bar { display: none; }
 .reading.failed .reading-sub { color: var(--ink); overflow-wrap: anywhere; white-space: pre-line; }
 .ver { margin: 12px 0 0; text-align: center; font-size: 12px; color: var(--ink-3); }
+
+/* ===== التقويم ===== */
+.cal-toggle {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--sky-soft); border-radius: 14px;
+  padding: 12px 14px; margin: 2px 0 10px; cursor: pointer;
+}
+.cal-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.switch {
+  flex: none; width: 46px; height: 28px; border-radius: 14px;
+  background: var(--beige-3); position: relative; transition: background .15s;
+}
+.switch::after {
+  content: ""; position: absolute; top: 3px; inset-inline-start: 3px;
+  width: 22px; height: 22px; border-radius: 50%; background: var(--white);
+  box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: inset-inline-start .15s;
+}
+.cal-toggle input:checked + .switch { background: var(--ink); }
+.cal-toggle input:checked + .switch::after { inset-inline-start: 21px; }
+.cal-toggle input:focus-visible + .switch { outline: 2px solid var(--sky-ink); outline-offset: 2px; }
+.cal-txt { display: flex; flex-direction: column; line-height: 1.45; }
+.cal-txt b { font-size: 15px; }
+.cal-txt small { font-size: 12.5px; color: var(--ink-2); }
