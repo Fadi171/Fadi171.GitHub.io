@@ -584,7 +584,7 @@
       langPath: base + "lang",
       logger: (m) => {
         if (job !== ocrJob) return;
-        if (m.status === "recognizing text") readingUI("أقرا الكلام…", m.progress, "");
+        if (m.status === "recognizing text") return;
         else readingUI("أجهّز القراية…", m.progress * 0.9, "أول مرة بس تاخذ شوي، بعدها تصير أسرع");
       },
       errorHandler: (e) => fail(e instanceof Error ? e : new Error(String(e))),
@@ -601,7 +601,10 @@
   // نجهز الصورة للقراية: نصغرها، ونخليها أبيض وأسود حسب الإضاءة حول كل نقطة،
   // فالخلفية والرسومات تصير بيضا والكلام يبقى أسود. ولو الخلفية غامقة (سبورة) نعكسها.
   function ocrCanvas(source, w, h) {
-    const k = Math.min(1, 1600 / Math.max(w, h));
+    return { adaptive: prepCanvas(source, w, h, true), gray: prepCanvas(source, w, h, false) };
+  }
+  function prepCanvas(source, w, h, adaptive) {
+    const k = Math.min(1, 2000 / Math.max(w, h));
     const W = Math.max(1, Math.round(w * k)), H = Math.max(1, Math.round(h * k));
     const c = document.createElement("canvas");
     c.width = W;
@@ -620,6 +623,11 @@
       sum += v;
     }
     if (sum / g.length < 110) for (let i = 0; i < g.length; i++) g[i] = 255 - g[i];
+    if (!adaptive) {
+      for (let i = 0; i < g.length; i++) { const o = i * 4; d[o] = d[o + 1] = d[o + 2] = g[i]; d[o + 3] = 255; }
+      ctx.putImageData(im, 0, 0);
+      return c;
+    }
     const I = new Float64Array((W + 1) * (H + 1));
     for (let y = 0; y < H; y++) {
       let row = 0;
@@ -656,35 +664,44 @@
   // ناخذ بس الكلمات اللي القراية متأكدة منها، ونشيل الرموز والخربطة اللي تجي من الرسومات والخلفية
   const JUNK_EDGES = /^[^\p{L}\p{N}]+|[^\p{L}\p{N}%]+$/gu;
   const BIDI = /[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g;
-  function goodWord(w) {
+  function goodWord(w, lineConf) {
     const t = (w.text || "").replace(BIDI, "").replace(JUNK_EDGES, "");
     if (!t) return null;
     const letters = (t.match(/[\p{L}\p{N}]/gu) || []).length;
     if (letters / t.length < 0.7) return null;                  // أغلبها رموز
     if (/(.)\1{2,}/u.test(t) && !/\p{N}/u.test(t)) return null; // حرف مكرر مثل lll
+    if (/^\p{Script=Latin}$/u.test(t) && !/^[aAI]$/.test(t)) return null; // حرف إنجليزي لحاله
     const arabic = /\p{Script=Arabic}/u.test(t);
-    let need = arabic ? 70 : 75;
-    if (letters <= 2) need = 85;                                 // الكلمات القصيرة أكثر شي يطلع غلط
-    if (/^\p{Script=Latin}$/u.test(t) && !/^[aAI]$/.test(t)) return null;
+    let need = arabic ? 58 : 65;
+    if (letters <= 2) need = /^\p{N}+$/u.test(t) ? 65 : 75;    // الكلمات القصيرة أكثر شي يطلع غلط
+    // السطر كله واضح؟ نثق بكلماته حتى لو وحدة منها درجتها أقل
+    if (lineConf >= 75 && letters >= 2) need = Math.min(need, 40);
     return w.confidence >= need ? t : null;
   }
   function cleanResult(data) {
     const out = [];
+    let score = 0;
     for (const b of data.blocks || []) {
       for (const p of b.paragraphs || []) {
         for (const l of p.lines || []) {
           const all = l.words || [];
-          const words = all.map(goodWord).filter(Boolean);
+          let kept = all.map((w) => ({ t: goodWord(w, l.confidence), c: w.confidence })).filter((x) => x.t);
+          // أطراف السطر أكثر مكان تطلع فيه زيادات من حواف الصورة والرسومات
+          const shaky = (x) => x.t.length <= 2 && x.c < (/^\p{N}+$/u.test(x.t) ? 80 : 90);
+          while (kept.length > 1 && shaky(kept[0])) kept.shift();
+          while (kept.length > 1 && shaky(kept[kept.length - 1])) kept.pop();
+          const words = kept.map((x) => x.t);
           if (!words.length) continue;
           const chars = words.join("").length;
           if (chars < 2) continue;
           // سطر أغلبه خربطة وفيه كلمة قصيرة وحدة صح بالصدفة
           if (all.length >= 4 && words.length / all.length < 0.3 && chars < 6) continue;
           out.push(words.join(" "));
+          score += chars;
         }
       }
     }
-    return out;
+    return { lines: out, score };
   }
 
   let lastOcrSrc = null;
@@ -692,15 +709,22 @@
     const job = ++ocrJob;
     readingUI("أجهّز القراية…", 0.02, "");
     try {
-      const canvas = src instanceof Blob ? await fileToCanvas(src) : src;
-      lastOcrSrc = canvas;
+      const canvases = src instanceof Blob ? await fileToCanvas(src) : src;
+      lastOcrSrc = canvases;
       const w = await getWorker(job);
       if (job !== ocrJob) return;
-      readingUI("أقرا الكلام…", 0, "");
-      const { data } = await timeout(w.recognize(canvas, {}, { text: true, blocks: true }), 90000, "القراية طوّلت كثير");
-      if (job !== ocrJob) return;
+      // نقرا الصورة بطريقتين وناخذ اللي طلع منها كلام أكثر
+      let best = { lines: [], score: 0 };
+      const passes = [canvases.adaptive, canvases.gray];
+      for (let n = 0; n < passes.length; n++) {
+        readingUI("أقرا الكلام…", n / passes.length, passes.length > 1 ? `المحاولة ${n + 1} من ${passes.length}` : "");
+        const { data } = await timeout(w.recognize(passes[n], {}, { text: true, blocks: true }), 90000, "القراية طوّلت كثير");
+        if (job !== ocrJob) return;
+        const r = cleanResult(data);
+        if (r.score > best.score) best = r;
+      }
       $("reading").hidden = true;
-      const lines = cleanResult(data);
+      const lines = best.lines;
       if (!lines.length) { toast("ما لقيت كلام واضح، قرّب الكاميرا وجرّب مرة ثانية"); return; }
       insertLines(lines);
       toast("تحوّلت لكلام، عدّل اللي تبي");
