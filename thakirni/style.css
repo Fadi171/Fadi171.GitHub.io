@@ -404,3 +404,38 @@ dialog.sheet::backdrop { background: rgba(21,21,21,.42); }
 @media (min-width: 880px) {
   .toolbar { justify-content: center; gap: 28px; }
 }
+
+/* ===== الكاميرتين ===== */
+.cam-btn {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: grid; place-items: center;
+}
+.cam-btn svg { width: 21px; height: 21px; }
+.cam-btn-ink { background: var(--ink); color: var(--white); }
+.cam-btn-sky { background: var(--sky); color: var(--ink); }
+.cam-btn:active { transform: scale(.94); }
+.tool-sky svg { background: var(--sky); color: var(--ink); }
+.tool-sky span { color: var(--sky-ink); font-weight: 600; }
+.camera.mode-text .shutter { border-color: var(--sky); }
+.camera.mode-text .shutter span { background: var(--sky); }
+.camera.mode-photo .shutter { border-color: var(--white); }
+.cam-hint b { color: var(--sky); font-weight: 700; }
+
+/* ===== شاشة القراية ===== */
+.reading {
+  position: fixed; inset: 0; z-index: 58;
+  background: rgba(21,21,21,.5);
+  display: grid; place-items: center; padding: 24px;
+}
+.reading-in {
+  background: var(--white); border-radius: 20px;
+  padding: 22px; width: min(360px, 100%); text-align: center;
+}
+.reading-title { margin: 0 0 14px; font-weight: 700; font-size: 18px; }
+.bar { height: 8px; border-radius: 4px; background: var(--beige); overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--sky); border-radius: 4px; transition: width .2s; }
+.reading-sub { margin: 10px 0 14px; font-size: 13px; color: var(--ink-2); min-height: 1.3em; }
+.empty-hint { display: block; margin-top: 14px; font-size: 14px; line-height: 2; color: var(--ink-2); }
+.empty-hint i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-inline-end: 6px; vertical-align: middle; }
+.dot-sky { background: var(--sky); }
+.dot-ink { background: var(--ink); }

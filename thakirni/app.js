@@ -132,7 +132,7 @@
       if (q) {
         e.innerHTML = "<b>ما لقيت شي</b>جرّب كلمة ثانية.";
       } else {
-        e.innerHTML = 'صوّر أي شي أو اكتب اللي تبي وأذكرك فيه.';
+        e.innerHTML = 'صوّر أي شي أو اكتب اللي تبي وأذكرك فيه.<span class="empty-hint"><i class="dot-sky"></i>الكاميرا السماوية تحوّل الصورة لكلام<br><i class="dot-ink"></i>الكاميرا السودا تخليها صورة</span>';
       }
       list.appendChild(e);
       updateBadge();
@@ -391,8 +391,7 @@
       im.src = url;
     });
   }
-  function shrink(source, w, h) {
-    const max = 1800;
+  function shrink(source, w, h, max = 1800) {
     const k = Math.min(1, max / Math.max(w, h));
     const c = document.createElement("canvas");
     c.width = Math.round(w * k);
@@ -458,6 +457,7 @@
     if (!f) return;
     closeCamera();
     if (!current) newNote(false);
+    if (camMode === "text") { readText(f); return; }
     try { insertPhoto(await fileToPhoto(f)); toast("انلصقت الصورة"); } catch { toast("ما قدرت أفتح الصورة"); }
   };
 
@@ -496,22 +496,33 @@
     if (stream) stream.getTracks().forEach((t) => t.stop());
     stream = null;
   }
-  function openCamera() {
+  // camMode: "photo" = تنحط الصورة نفسها، "text" = تنقرا وتصير كلام
+  let camMode = "photo";
+  function openCamera(mode = "photo") {
     unlockAudio();
-    $("camera").hidden = false;
+    camMode = mode;
+    const cam = $("camera");
+    cam.classList.toggle("mode-text", mode === "text");
+    cam.classList.toggle("mode-photo", mode !== "text");
+    $("camHint").innerHTML = mode === "text"
+      ? "وجّه الكاميرا على الكلام، وبحوّله لك <b>كتابة</b>"
+      : "وجّه الكاميرا واضغط الزر، وتنحط <b>صورة</b>";
+    cam.hidden = false;
     startCamera();
   }
   function closeCamera() {
     stopStream();
     $("camera").hidden = true;
   }
-  function quickCamera() {
+  function quickCamera(mode) {
     newNote(false);
-    openCamera();
+    openCamera(mode);
   }
 
-  $("tCam").onclick = openCamera;
-  $("btnQuickCam").onclick = quickCamera;
+  $("tCam").onclick = () => openCamera("photo");
+  $("tText").onclick = () => openCamera("text");
+  $("btnQuickCam").onclick = () => quickCamera("photo");
+  $("btnQuickText").onclick = () => quickCamera("text");
   $("camClose").onclick = closeCamera;
   $("camFallback").onclick = () => $("fileCapture").click();
   $("camFlip").onclick = () => { facing = facing === "environment" ? "user" : "environment"; startCamera(); };
@@ -521,11 +532,118 @@
     const fl = $("camFlash");
     fl.classList.add("go");
     requestAnimationFrame(() => requestAnimationFrame(() => fl.classList.remove("go")));
+    if (camMode === "text") {
+      const big = shrink(v, v.videoWidth, v.videoHeight, 2400);
+      closeCamera();
+      readText(big);
+      return;
+    }
     const src = shrink(v, v.videoWidth, v.videoHeight);
     closeCamera();
     insertPhoto(src);
     toast("انلصقت الصورة في الملاحظة");
   };
+
+  /* ---------- تحويل الصورة لكلام (Tesseract) ---------- */
+  let ocrWorker = null;
+  let ocrJob = 0;
+
+  function loadScript(src) {
+    return new Promise((res, rej) => {
+      if (window.Tesseract) return res();
+      const sc = document.createElement("script");
+      sc.src = src;
+      sc.onload = res;
+      sc.onerror = rej;
+      document.head.appendChild(sc);
+    });
+  }
+  function readingUI(title, pct, sub) {
+    $("reading").hidden = false;
+    if (title) $("readTitle").textContent = title;
+    $("readBar").style.width = Math.round((pct || 0) * 100) + "%";
+    $("readSub").textContent = sub || "";
+  }
+  async function getWorker(job) {
+    if (ocrWorker) return ocrWorker;
+    await loadScript("ocr/tesseract.min.js");
+    const base = new URL("ocr/", location.href).href;
+    const w = await Tesseract.createWorker(["ara", "eng"], 1, {
+      workerPath: base + "worker.min.js",
+      corePath: base + "core",
+      langPath: base + "lang",
+      logger: (m) => {
+        if (job !== ocrJob) return;
+        if (m.status === "recognizing text") readingUI("أقرا الكلام…", m.progress, "");
+        else readingUI("أجهّز القراية…", m.progress * 0.9, "أول مرة بس تاخذ شوي، بعدها تصير أسرع");
+      },
+    });
+    ocrWorker = w;
+    return w;
+  }
+  function cleanText(t) {
+    return t
+      .split("\n")
+      .map((l) => l.replace(/[\u200e\u200f\u202a-\u202e]/g, "").replace(/\s+/g, " ").trim())
+      .filter((l) => l && /[\p{L}\p{N}]/u.test(l));
+  }
+  async function readText(src) {
+    const job = ++ocrJob;
+    readingUI("أجهّز القراية…", 0.02, "");
+    try {
+      const w = await getWorker(job);
+      if (job !== ocrJob) return;
+      readingUI("أقرا الكلام…", 0, "");
+      const { data } = await w.recognize(src);
+      if (job !== ocrJob) return;
+      $("reading").hidden = true;
+      const lines = cleanText(data.text || "");
+      if (!lines.length) { toast("ما لقيت كلام واضح، قرّب الكاميرا وجرّب مرة ثانية"); return; }
+      insertLines(lines);
+      toast("تحوّلت لكلام، عدّل اللي تبي");
+    } catch (err) {
+      if (job !== ocrJob) return;
+      $("reading").hidden = true;
+      toast(navigator.onLine === false ? "أول مرة تحتاج نت عشان تتجهز القراية" : "ما قدرت أقرا الصورة، جرّب مرة ثانية");
+    }
+  }
+  $("readCancel").onclick = async () => {
+    ocrJob++;
+    $("reading").hidden = true;
+    if (ocrWorker) { const w = ocrWorker; ocrWorker = null; try { await w.terminate(); } catch {} }
+  };
+
+  function insertLines(lines) {
+    if (!current) return;
+    const frag = document.createDocumentFragment();
+    let last = null;
+    for (const l of lines) {
+      const d = document.createElement("div");
+      d.textContent = l;
+      frag.appendChild(d);
+      last = d;
+    }
+    let placed = false;
+    if (savedRange && body.contains(savedRange.startContainer)) {
+      let block = savedRange.startContainer;
+      while (block && block.parentNode !== body) block = block.parentNode;
+      if (block && block !== body) {
+        const empty = !block.textContent.trim() && !block.querySelector("img");
+        if (empty) block.replaceWith(frag); else block.after(frag);
+        placed = true;
+      }
+    }
+    if (!placed) body.appendChild(frag);
+    const sel = window.getSelection();
+    const r = document.createRange();
+    r.selectNodeContents(last);
+    r.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(r);
+    savedRange = r.cloneRange();
+    flushSave();
+    requestAnimationFrame(() => last.scrollIntoView({ behavior: "smooth", block: "center" }));
+  }
 
   /* ---------- عرض الصورة ---------- */
   let viewing = null;
