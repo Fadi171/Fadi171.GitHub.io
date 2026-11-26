@@ -442,3 +442,4 @@ dialog.sheet::backdrop { background: rgba(21,21,21,.42); }
 .reading-actions { display: flex; gap: 8px; justify-content: center; }
 .reading.failed .bar { display: none; }
 .reading.failed .reading-sub { color: var(--ink); overflow-wrap: anywhere; white-space: pre-line; }
+.ver { margin: 12px 0 0; text-align: center; font-size: 12px; color: var(--ink-3); }
