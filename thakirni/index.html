@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -134,6 +134,7 @@
       </div>
 
       <div class="chips" id="remQuick">
+        <button type="button" class="chip" data-q="1m">بعد دقيقة</button>
         <button type="button" class="chip" data-q="10m">بعد 10 دقايق</button>
         <button type="button" class="chip" data-q="1h">بعد ساعة</button>
         <button type="button" class="chip" data-q="tonight">الليلة 9</button>
@@ -162,11 +163,15 @@
         </div>
       </div>
 
-      <label class="cal-toggle">
-        <input type="checkbox" id="remCal" checked>
-        <span class="switch" aria-hidden="true"></span>
-        <span class="cal-txt"><b>يرن حتى لو الموقع مسكّر</b><small>يضيفه لتقويم جوالك، والتقويم ينبهك في وقته</small></span>
-      </label>
+      <div class="field">
+        <span>لو الموقع مسكّر، وش يرن؟</span>
+        <div class="seg" id="remOutside">
+          <button type="button" data-v="clock">منبه الساعة</button>
+          <button type="button" data-v="cal">التقويم</button>
+          <button type="button" data-v="none">ولا شي</button>
+        </div>
+        <p class="outside-hint" id="outsideHint"></p>
+      </div>
 
       <p class="rem-preview" id="remPreview"></p>
 
@@ -175,6 +180,29 @@
         <button type="submit" class="btn btn-ink" id="remSave">ثبّت المنبه</button>
       </div>
     </form>
+  </dialog>
+
+  <!-- تجهيز منبه الساعة -->
+  <dialog class="sheet" id="clockDlg">
+    <div class="sheet-in">
+      <div class="sheet-head">
+        <h2>جهّز منبه الساعة</h2>
+        <button type="button" class="icon-btn" id="clockClose" aria-label="سكّر"><svg><use href="#i-close"/></svg></button>
+      </div>
+      <p class="guide-lead">مرة وحدة بس. بعدها كل منبه تحطه في ذكرني ينحط في <b>تطبيق الساعة</b>، ويرن بصوت عالي لين تطفيه حتى لو الموقع مسكّر أو الجوال صامت.</p>
+      <ol class="guide">
+        <li>افتح تطبيق <b>الاختصارات</b> واضغط <b>+</b> فوق.</li>
+        <li>اضغط على اسم الاختصار فوق وسمّه <b>ذكرني</b> بالضبط.</li>
+        <li>اضغط <b>إضافة إجراء</b>، وابحث عن <b>إنشاء منبه</b> (من تطبيق الساعة) وأضفه.</li>
+        <li>اضغط على الوقت اللي داخل الإجراء، واختر <b>مُدخل الاختصار</b>.</li>
+        <li>اضغط <b>تم</b>. وخلاص.</li>
+      </ol>
+      <p class="guide-note">أول مرة يشتغل بيسألك يسمح له يوصل للساعة، اضغط <b>سماح</b>.</p>
+      <div class="sheet-actions">
+        <button type="button" class="btn btn-ghost" id="clockTest">جرّبه (بعد دقيقة)</button>
+        <button type="button" class="btn btn-ink" id="clockDone">جهّزته</button>
+      </div>
+    </div>
   </dialog>
 
   <!-- كل المنبهات -->
@@ -188,7 +216,7 @@
       <div class="sheet-actions">
         <button type="button" class="btn btn-ink" id="alarmsNew">منبه جديد</button>
       </div>
-      <p class="ver">نسخة 8</p>
+      <p class="ver">نسخة 9</p>
     </div>
   </dialog>
 
@@ -234,6 +262,6 @@
   <input type="file" id="filePick" accept="image/*" multiple hidden>
   <input type="file" id="fileCapture" accept="image/*" capture="environment" hidden>
 
-  <script src="app.js?v=8"></script>
+  <script src="app.js?v=9"></script>
 </body>
 </html>

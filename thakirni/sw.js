@@ -1,4 +1,4 @@
-const CACHE = "thakirni-v8";
+const CACHE = "thakirni-v9";
 const SHELL = ["./", "index.html", "style.css", "app.js", "manifest.webmanifest", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {
@@ -18,6 +18,15 @@ self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
+  // ملف التقويم نسويه هنا عشان الآيفون يفتح شاشة "إضافة للتقويم" على طول
+  if (url.pathname.endsWith("/event.ics")) {
+    const b64 = (url.searchParams.get("d") || "").replace(/-/g, "+").replace(/_/g, "/");
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    e.respondWith(new Response(bytes, { headers: { "Content-Type": "text/calendar; charset=utf-8" } }));
+    return;
+  }
   const isFont = url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com";
   const inScope = url.origin === location.origin && url.pathname.startsWith(new URL(self.registration.scope).pathname);
   if (!isFont && !inScope) return;
