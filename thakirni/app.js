@@ -61,7 +61,7 @@
   function titleOf(n) {
     const lines = textOf(n.html);
     if (lines[0]) return lines[0];
-    return firstImg(n.html) ? "صورة اللوحة" : "ملاحظة جديدة";
+    return firstImg(n.html) ? "صورة" : "ملاحظة جديدة";
   }
   function isEmpty(n) { return !textOf(n.html).length && !firstImg(n.html); }
 
@@ -132,11 +132,9 @@
       if (q) {
         e.innerHTML = "<b>ما لقيت شي</b>جرّب كلمة ثانية.";
       } else {
-        e.innerHTML = '<b>مافي ملاحظات للحين</b>اكتب أول وحدة، أو صوّر اللوحة وتنحفظ هنا على طول.<br><button class="btn btn-ink" id="emptyCam">صوّر اللوحة</button>';
+        e.innerHTML = 'صوّر أي شي أو اكتب اللي تبي وأذكرك فيه.';
       }
       list.appendChild(e);
-      const ec = $("emptyCam");
-      if (ec) ec.onclick = quickCamera;
       updateBadge();
       return;
     }
@@ -431,7 +429,7 @@
     if (!placed) {
       if (!body.innerHTML.trim()) {
         const head = document.createElement("div");
-        head.textContent = "صورة اللوحة " + new Date().toLocaleDateString(LOCALE, { day: "numeric", month: "long" });
+        head.textContent = "صورة " + new Date().toLocaleDateString(LOCALE, { day: "numeric", month: "long" });
         body.appendChild(head);
       }
       body.append(wrap, after);
