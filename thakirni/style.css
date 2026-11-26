@@ -439,3 +439,6 @@ dialog.sheet::backdrop { background: rgba(21,21,21,.42); }
 .empty-hint i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-inline-end: 6px; vertical-align: middle; }
 .dot-sky { background: var(--sky); }
 .dot-ink { background: var(--ink); }
+.reading-actions { display: flex; gap: 8px; justify-content: center; }
+.reading.failed .bar { display: none; }
+.reading.failed .reading-sub { color: var(--ink); overflow-wrap: anywhere; white-space: pre-line; }

@@ -533,9 +533,9 @@
     fl.classList.add("go");
     requestAnimationFrame(() => requestAnimationFrame(() => fl.classList.remove("go")));
     if (camMode === "text") {
-      const big = shrink(v, v.videoWidth, v.videoHeight, 2400);
+      const c = ocrCanvas(v, v.videoWidth, v.videoHeight);
       closeCamera();
-      readText(big);
+      readText(c);
       return;
     }
     const src = shrink(v, v.videoWidth, v.videoHeight);
@@ -558,18 +558,28 @@
       document.head.appendChild(sc);
     });
   }
-  function readingUI(title, pct, sub) {
+  function readingUI(title, pct, sub, failed) {
     $("reading").hidden = false;
+    $("reading").classList.toggle("failed", !!failed);
     if (title) $("readTitle").textContent = title;
     $("readBar").style.width = Math.round((pct || 0) * 100) + "%";
     $("readSub").textContent = sub || "";
+    $("readCancel").textContent = failed ? "سكّر" : "إلغاء";
+    $("readRetry").hidden = !failed;
+  }
+  function timeout(p, ms, what) {
+    return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(what)), ms))]);
   }
   async function getWorker(job) {
     if (ocrWorker) return ocrWorker;
-    await loadScript("ocr/tesseract.min.js");
+    await timeout(loadScript("ocr/tesseract.min.js"), 30000, "ما تحمّل ملف القراية");
     const base = new URL("ocr/", location.href).href;
-    const w = await Tesseract.createWorker(["ara", "eng"], 1, {
+    // المكتبة أحياناً تعلّق بدل ما تعطي خطأ، فنمسك الخطأ بأنفسنا
+    let fail;
+    const failed = new Promise((_, rej) => (fail = rej));
+    const w = await timeout(Promise.race([failed, Tesseract.createWorker(["ara", "eng"], 1, {
       workerPath: base + "worker.min.js",
+      workerBlobURL: false,
       corePath: base + "core",
       langPath: base + "lang",
       logger: (m) => {
@@ -577,24 +587,67 @@
         if (m.status === "recognizing text") readingUI("أقرا الكلام…", m.progress, "");
         else readingUI("أجهّز القراية…", m.progress * 0.9, "أول مرة بس تاخذ شوي، بعدها تصير أسرع");
       },
-    });
+      errorHandler: (e) => fail(e instanceof Error ? e : new Error(String(e))),
+    })]), 120000, "التجهيز طوّل كثير");
     ocrWorker = w;
     return w;
   }
+
+  // نصغّر الصورة ونخليها رمادي: أخف على ذاكرة الجوال وأوضح للقراية
+  function ocrCanvas(source, w, h) {
+    const k = Math.min(1, 1600 / Math.max(w, h));
+    const c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(w * k));
+    c.height = Math.max(1, Math.round(h * k));
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(source, 0, 0, c.width, c.height);
+    const im = ctx.getImageData(0, 0, c.width, c.height);
+    const d = im.data;
+    let lo = 255, hi = 0;
+    for (let i = 0; i < d.length; i += 4) {
+      const g = (d[i] * 299 + d[i + 1] * 587 + d[i + 2] * 114) / 1000;
+      d[i] = g;
+      if (g < lo) lo = g;
+      if (g > hi) hi = g;
+    }
+    const range = Math.max(1, hi - lo);
+    for (let i = 0; i < d.length; i += 4) {
+      const v = ((d[i] - lo) * 255) / range;
+      d[i] = d[i + 1] = d[i + 2] = v;
+    }
+    ctx.putImageData(im, 0, 0);
+    return c;
+  }
+  function fileToCanvas(file) {
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file);
+      const im = new Image();
+      im.onload = () => { const c = ocrCanvas(im, im.naturalWidth, im.naturalHeight); URL.revokeObjectURL(url); res(c); };
+      im.onerror = () => { URL.revokeObjectURL(url); rej(new Error("ما انفتحت الصورة")); };
+      im.src = url;
+    });
+  }
+
   function cleanText(t) {
     return t
       .split("\n")
       .map((l) => l.replace(/[\u200e\u200f\u202a-\u202e]/g, "").replace(/\s+/g, " ").trim())
       .filter((l) => l && /[\p{L}\p{N}]/u.test(l));
   }
+
+  let lastOcrSrc = null;
   async function readText(src) {
     const job = ++ocrJob;
     readingUI("أجهّز القراية…", 0.02, "");
     try {
+      const canvas = src instanceof Blob ? await fileToCanvas(src) : src;
+      lastOcrSrc = canvas;
       const w = await getWorker(job);
       if (job !== ocrJob) return;
       readingUI("أقرا الكلام…", 0, "");
-      const { data } = await w.recognize(src);
+      const { data } = await timeout(w.recognize(canvas), 90000, "القراية طوّلت كثير");
       if (job !== ocrJob) return;
       $("reading").hidden = true;
       const lines = cleanText(data.text || "");
@@ -603,15 +656,21 @@
       toast("تحوّلت لكلام، عدّل اللي تبي");
     } catch (err) {
       if (job !== ocrJob) return;
-      $("reading").hidden = true;
-      toast(navigator.onLine === false ? "أول مرة تحتاج نت عشان تتجهز القراية" : "ما قدرت أقرا الصورة، جرّب مرة ثانية");
+      // نرمي الـ worker عشان المحاولة الجاية تبدأ من جديد
+      if (ocrWorker) { const w = ocrWorker; ocrWorker = null; w.terminate().catch(() => {}); }
+      const why = (err && (err.message || String(err))) || "خطأ";
+      const offline = navigator.onLine === false;
+      readingUI("ما زبطت القراية", 0, offline ? "أول مرة تحتاج نت عشان تتجهز القراية." : "السبب:\n\u2068" + why + "\u2069", true);
     }
   }
   $("readCancel").onclick = async () => {
     ocrJob++;
     $("reading").hidden = true;
-    if (ocrWorker) { const w = ocrWorker; ocrWorker = null; try { await w.terminate(); } catch {} }
+    if (ocrWorker && !$("reading").classList.contains("failed")) {
+      const w = ocrWorker; ocrWorker = null; try { await w.terminate(); } catch {}
+    }
   };
+  $("readRetry").onclick = () => { if (lastOcrSrc) readText(lastOcrSrc); };
 
   function insertLines(lines) {
     if (!current) return;

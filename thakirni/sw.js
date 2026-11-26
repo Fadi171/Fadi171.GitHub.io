@@ -1,4 +1,4 @@
-const CACHE = "thakirni-v3";
+const CACHE = "thakirni-v4";
 const SHELL = ["./", "index.html", "style.css", "app.js", "manifest.webmanifest", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {
@@ -21,6 +21,8 @@ self.addEventListener("fetch", (e) => {
   const isFont = url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com";
   const inScope = url.origin === location.origin && url.pathname.startsWith(new URL(self.registration.scope).pathname);
   if (!isFont && !inScope) return;
+  // ملفات القراية كبيرة، نخليها للمتصفح نفسه
+  if (url.pathname.includes("/ocr/")) return;
   e.respondWith(
     fetch(req)
       .then((res) => {
